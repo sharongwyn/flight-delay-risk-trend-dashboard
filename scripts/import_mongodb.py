@@ -65,9 +65,18 @@ delay_time["avg_delay"] = (
     delay_time["weather_delay_count"]
 )
 
-delay_time["risk_level"] = delay_time["weather_delay_percentage_total"].apply(
-    lambda x: "High" if x > 15 else "Medium" if x >= 5 else "Low"
-)
+q_low = delay_time["weather_delay_percentage_total"].quantile(0.33)
+q_high = delay_time["weather_delay_percentage_total"].quantile(0.66)
+
+def classify_risk(x):
+    if x <= q_low:
+        return "Low"
+    elif x <= q_high:
+        return "Medium"
+    else:
+        return "High"
+
+delay_time["risk_level"] = delay_time["weather_delay_percentage_total"].apply(classify_risk)
 
 db.delay_time_analysis.delete_many({})
 db.delay_time_analysis.insert_many(delay_time.to_dict("records"))
@@ -101,7 +110,7 @@ db.airline_performance.insert_many(airline_perf.to_dict("records"))
 print("Inserted airline_performance")
 
 # =====================================================
-# 3. delay_cause_distribution (FIXED + ADD MONTH)
+# 3. delay_cause_distribution 
 # =====================================================
 
 delay_cause = flights.groupby(["year", "month", "region"]).agg(
