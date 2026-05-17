@@ -32,7 +32,7 @@ airlines = pd.read_sql("SELECT * FROM airlines", engine)
 
 print("Data loaded from MySQL!")
 
-# lowercase columns biar aman
+# lowercase columns
 for df in [flights, airports, states, regions, airlines]:
     df.columns = df.columns.str.lower()
 
@@ -139,17 +139,44 @@ print("Inserted airline_performance")
 # =====================================================
 # 3. delay_cause_distribution
 # =====================================================
+
 delay_cause = flights.groupby(["year", "month", "region"]).agg(
+    # FREQUENCY (CT)
     carrier_ct=("carrier_ct", "sum"),
     weather_ct=("weather_ct", "sum"),
     nas_ct=("nas_ct", "sum"),
     security_ct=("security_ct", "sum"),
-    late_aircraft_ct=("late_aircraft_ct", "sum")
+    late_aircraft_ct=("late_aircraft_ct", "sum"),
+
+    # IMPACT (MINUTES)
+    carrier_delay=("carrier_delay", "sum"),
+    weather_delay=("weather_delay", "sum"),
+    nas_delay=("nas_delay", "sum"),
+    security_delay=("security_delay", "sum"),
+    late_aircraft_delay=("late_aircraft_delay", "sum")
 ).reset_index()
 
-ct_cols = ["carrier_ct","weather_ct","nas_ct","security_ct","late_aircraft_ct"]
+
+ct_cols = [
+    "carrier_ct",
+    "weather_ct",
+    "nas_ct",
+    "security_ct",
+    "late_aircraft_ct"
+]
 
 delay_cause["dominant_by_ct"] = delay_cause[ct_cols].idxmax(axis=1)
+
+delay_cols = [
+    "carrier_delay",
+    "weather_delay",
+    "nas_delay",
+    "security_delay",
+    "late_aircraft_delay"
+]
+
+delay_cause["dominant_by_delay"] = delay_cause[delay_cols].idxmax(axis=1)
+
 
 db.delay_cause_distribution.delete_many({})
 db.delay_cause_distribution.insert_many(delay_cause.to_dict("records"))
