@@ -610,7 +610,7 @@ with tab2:
     st.markdown("""
     <div class="tab-filter-panel">
       <div class="tab-filter-title">✈️ Airline Filter <span style="font-weight:400;color:#94A3B8;font-size:0.68rem;text-transform:none;letter-spacing:0">&nbsp;</span></div>
-      <div class="tab-filter-note">Select which airlines to include. Uses st.multiselect for compact display.</div>
+      <div class="tab-filter-note">Select which airlines to include.</div>
     </div>
     """, unsafe_allow_html=True)
 
