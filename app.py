@@ -4,9 +4,7 @@ import plotly.graph_objects as go
 from pymongo import MongoClient
 from scripts.config import MONGO_CONFIG
 
-# ─────────────────────────────────────────────
 # PAGE CONFIG
-# ─────────────────────────────────────────────
 st.set_page_config(
     page_title="Flight Delay Intelligence",
     page_icon="✈️",
@@ -14,9 +12,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ─────────────────────────────────────────────
-# CSS
-# ─────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
@@ -173,9 +168,7 @@ hr { border-color: #E2E8F0; margin: 1.2rem 0; }
 </style>
 """, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────
 # MONGODB
-# ─────────────────────────────────────────────
 @st.cache_resource
 def get_db():
     client = MongoClient(MONGO_CONFIG["uri"])
@@ -195,9 +188,7 @@ def load_airline_perf():
 def load_delay_cause():
     return pd.DataFrame(list(db.delay_cause_distribution.find({}, {"_id": 0})))
 
-# ─────────────────────────────────────────────
 # CHART CONSTANTS
-# ─────────────────────────────────────────────
 BG      = "#FFFFFF"
 PLOT_BG = "#F8FAFC"
 GRID    = "#E2E8F0"
@@ -289,28 +280,18 @@ def make_pie(labs, vals, title):
     )
     return fig
 
-# ─────────────────────────────────────────────
 # LOAD ALL DATA
-# ─────────────────────────────────────────────
 df_dt = load_delay_time()
 df_ap = load_airline_perf()
 df_dc = load_delay_cause()
 
-# ─────────────────────────────────────────────
-# SIDEBAR — GLOBAL FILTERS ONLY (Year + Month)
-# Tab-specific filters (Region, Airline) live inside each tab.
-# ─────────────────────────────────────────────
+# SIDEBAR — GLOBAL FILTERS (Year + Month)
 with st.sidebar:
     st.markdown("""
     <div style="font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:700;
-    color:#0F2744;margin-bottom:0.15rem;">🔧 Global Filters</div>
-    <div style="font-size:0.72rem;color:#64748B;margin-bottom:0.8rem;line-height:1.5;">
-    Year and Month apply to <strong>all tabs</strong>.<br>
-    Tab-specific filters (Region, Airline) appear inside each tab.
-    </div>
+    color:#0F2744;margin-bottom:0.15rem;">Global Filters</div>
     """, unsafe_allow_html=True)
 
-    # ── All available years across all collections ──
     all_years = sorted(set(
         list(df_dt["year"].dropna().unique() if not df_dt.empty else []) +
         list(df_ap["year"].dropna().unique() if not df_ap.empty else []) +
@@ -337,9 +318,7 @@ with st.sidebar:
 if not sel_years:  sel_years  = [int(all_years[0])] if all_years else []
 if not sel_months: sel_months = list(range(1, 13))
 
-# ─────────────────────────────────────────────
 # HERO
-# ─────────────────────────────────────────────
 yrs_str = ", ".join(str(y) for y in sorted(sel_years))
 mo_str  = ", ".join(MONTHS[m] for m in sorted(sel_months)[:4])
 if len(sel_months) > 4: mo_str += f" +{len(sel_months)-4} more"
@@ -354,19 +333,15 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────
 # TABS
-# ─────────────────────────────────────────────
 tab1, tab2, tab3 = st.tabs([
     "🌦️  Weather Risk & Seasonal Trends",
     "🏆  Airline Performance",
     "📊  Delay Cause Distribution",
 ])
 
-# ══════════════════════════════════════════════════════════
 # TAB 1 — WEATHER RISK
 # Tab-local filter: Region
-# ══════════════════════════════════════════════════════════
 with tab1:
     if df_dt.empty:
         st.warning("No data in `delay_time_analysis`.")
@@ -374,7 +349,7 @@ with tab1:
 
     all_regions_t1 = sorted(df_dt["region"].dropna().unique())
 
-    # ── Tab-local filter: Region ──
+    # Tab-local filter: Region ──
     st.markdown("""
     <div class="tab-filter-panel">
       <div class="tab-filter-title">🗺️ Region Filter <span style="font-weight:400;color:#94A3B8;font-size:0.68rem;text-transform:none;letter-spacing:0">&nbsp;</span></div>
@@ -382,7 +357,6 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
 
-    # Render checkboxes in a row using columns
     reg_cols = st.columns(len(all_regions_t1))
     sel_regions_t1 = []
     for i, reg in enumerate(all_regions_t1):
@@ -410,7 +384,7 @@ with tab1:
     if df1.empty:
         no_data()
     else:
-        # ── KPIs ──
+        # KPIs
         tot_f   = int(df1["total_flights"].sum())
         tot_wd  = int(df1["weather_delay_count"].sum())
         avg_pct = float(df1["weather_delay_percentage_total"].mean())
@@ -477,7 +451,7 @@ with tab1:
 
         y_str = "/".join(str(y) for y in sorted(sel_years))
 
-        # ── Row 1: Heatmap | Line ──
+        # Row 1: Heatmap | Line
         l1, r1 = st.columns([1.1, 1], gap="medium")
 
         with l1:
@@ -547,7 +521,7 @@ with tab1:
             fig_ln.update_layout(**ly2)
             st.plotly_chart(fig_ln, use_container_width=True, config={"displayModeBar": False})
 
-        # ── Row 2: Risk bar | Donut ──
+        # Row 2: Risk bar | Donut 
         l2, r2 = st.columns([1.4, 1], gap="medium")
 
         with l2:
@@ -598,7 +572,7 @@ with tab1:
             fig_dn.update_layout(**ly4)
             st.plotly_chart(fig_dn, use_container_width=True, config={"displayModeBar": False})
 
-        # ── Year-over-Year (only when multiple years selected) ──
+        # Year-over-Year (only when multiple years selected)
         if len(sel_years) > 1:
             sec("Year-over-Year — Avg Weather Delay % by Region")
             yoy1 = df1.groupby(["year","month"])["weather_delay_percentage_total"].mean().reset_index()
@@ -623,10 +597,8 @@ with tab1:
             st.plotly_chart(fig_yoy, use_container_width=True, config={"displayModeBar": False})
 
 
-# ══════════════════════════════════════════════════════════
 # TAB 2 — AIRLINE PERFORMANCE
 # Tab-local filter: Airline
-# ══════════════════════════════════════════════════════════
 with tab2:
     if df_ap.empty:
         st.warning("No data in `airline_performance`.")
@@ -634,7 +606,7 @@ with tab2:
 
     all_carriers = sorted(df_ap["carrier"].dropna().unique().tolist())
 
-    # ── Tab-local filter: Airline ──
+    # Tab-local filter: Airline 
     st.markdown("""
     <div class="tab-filter-panel">
       <div class="tab-filter-title">✈️ Airline Filter <span style="font-weight:400;color:#94A3B8;font-size:0.68rem;text-transform:none;letter-spacing:0">&nbsp;</span></div>
@@ -727,7 +699,7 @@ with tab2:
         </div>
         """, unsafe_allow_html=True)
 
-        # ── Row 1: Horizontal bar | Bubble ──
+        # Row 1: Horizontal bar | Bubble 
         b1, b2 = st.columns([1.1, 1], gap="medium")
 
         with b1:
@@ -785,7 +757,7 @@ with tab2:
             fig_sc.update_layout(**ly6)
             st.plotly_chart(fig_sc, use_container_width=True, config={"displayModeBar": False})
 
-        # ── Row 2: Monthly trend ──
+        # Row 2: Monthly trend
         sec("Monthly Delay Trend by Airline")
         trend2 = df2.groupby(["carrier","carrier_name","month","year"])["delay_percentage"].mean().reset_index()
         fig_tr = go.Figure()
@@ -810,7 +782,7 @@ with tab2:
         fig_tr.update_layout(**ly7)
         st.plotly_chart(fig_tr, use_container_width=True, config={"displayModeBar": False})
 
-        # ── Year-over-year ──
+        # Year-over-year
         if len(sel_years) > 1:
             sec("Year-over-Year Avg Delay Rate by Airline")
             yoy2 = df2.groupby(["year","carrier","carrier_name"])["delay_percentage"].mean().reset_index()
@@ -827,13 +799,15 @@ with tab2:
                     hovertemplate=f"<b>{cname}</b> · %{{x}}: <b>%{{y:.1f}}%</b><extra></extra>",
                 ))
             ly_yoy2 = base_layout("YoY Avg Delay Rate per Airline", height=300)
+            ly_yoy2["xaxis"] = ly_yoy2.get("xaxis", {})
+            ly_yoy2["xaxis"]["type"] = "category"
             ly_yoy2["yaxis"]["ticksuffix"] = "%"
             ly_yoy2["hovermode"] = "x unified"
             ly_yoy2["legend"] = DEFAULT_LEGEND
             fig_yoy2.update_layout(**ly_yoy2)
             st.plotly_chart(fig_yoy2, use_container_width=True, config={"displayModeBar": False})
 
-        # ── Summary Table ──
+        # Summary Table
         sec("Summary Table")
         tbl = kpi2.sort_values("delay_pct").copy()
         tbl["rank"] = range(1, len(tbl)+1)
@@ -849,10 +823,8 @@ with tab2:
                      })
 
 
-# ══════════════════════════════════════════════════════════
 # TAB 3 — DELAY CAUSE DISTRIBUTION
 # Tab-local filter: Region
-# ══════════════════════════════════════════════════════════
 with tab3:
     if df_dc.empty:
         st.warning("No data in `delay_cause_distribution`.")
@@ -865,7 +837,7 @@ with tab3:
 
     all_regions_t3 = sorted(df_dc["region"].dropna().unique())
 
-    # ── Tab-local filter: Region ──
+    # Tab-local filter: Region
     st.markdown("""
     <div class="tab-filter-panel">
       <div class="tab-filter-title">🗺️ Region Filter <span style="font-weight:400;color:#94A3B8;font-size:0.68rem;text-transform:none;letter-spacing:0">&nbsp;</span></div>
@@ -954,7 +926,7 @@ with tab3:
         </div>
         """, unsafe_allow_html=True)
 
-        # ── Row 1: Pie × 2 ──
+        # Row 1: Pie × 2
         p1, p2 = st.columns(2, gap="medium")
         with p1:
             sec("Delay Frequency — by Count (Aggregated)")
@@ -969,7 +941,7 @@ with tab3:
                 make_pie(list(CAUSE_MIN.values()), vals_min, f"Minutes · {reg_lbl} · {y_str3}"),
                 use_container_width=True, config={"displayModeBar": False})
 
-        # ── Row 2: Stacked bars ──
+        # Row 2: Stacked bars
         sec("Regional Comparison — Delay Frequency (Stacked)")
         reg_agg = df3.groupby("region")[[*CAUSE_CT.keys()]].sum().reset_index()
         fig_sb1 = go.Figure()
@@ -1003,7 +975,7 @@ with tab3:
         fig_sb2.update_layout(**ly_s2)
         st.plotly_chart(fig_sb2, use_container_width=True, config={"displayModeBar": False})
 
-        # ── Row 3: Monthly cause trend ──
+        # Row 3: Monthly cause trend
         sec("Monthly Cause Trend (Avg across Selected Regions & Years)")
         mo_agg = df3.groupby("month")[[*CAUSE_CT.keys()]].mean().reset_index()
         fig_ct = go.Figure()
@@ -1024,7 +996,7 @@ with tab3:
         fig_ct.update_layout(**ly_ct)
         st.plotly_chart(fig_ct, use_container_width=True, config={"displayModeBar": False})
 
-        # ── YoY cause comparison ──
+        # YoY cause comparison
         if len(sel_years) > 1:
             sec("Year-over-Year Cause Comparison")
             yoy3 = df3.groupby("year")[[*CAUSE_CT.keys()]].sum().reset_index()
@@ -1042,9 +1014,7 @@ with tab3:
             fig_yoy3.update_layout(**ly_yoy3)
             st.plotly_chart(fig_yoy3, use_container_width=True, config={"displayModeBar": False})
 
-# ─────────────────────────────────────────────
 # FOOTER
-# ─────────────────────────────────────────────
 st.markdown("""
 <hr>
 <div style="text-align:center;font-size:0.72rem;color:#94A3B8;padding-bottom:1rem;">
